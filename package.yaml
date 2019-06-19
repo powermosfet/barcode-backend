@@ -24,6 +24,12 @@ dependencies:
 
 library:
   source-dirs: src
+  dependencies:
+  - servant
+  - servant-server
+  - aeson
+  - wai
+  - warp
 
 executables:
   barcode-backend-exe:

@@ -24,11 +24,19 @@ dependencies:
 
 library:
   source-dirs: src
+  default-extensions:
+    - OverloadedStrings
   dependencies:
+  - aeson
+  - mtl
+  - HDBC
+  - HDBC-sqlite3
+  - HDBC-postgresql
   - servant
   - servant-server
-  - aeson
+  - transformers
   - wai
+  - either
   - warp
 
 executables:

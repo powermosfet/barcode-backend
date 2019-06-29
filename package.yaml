@@ -27,16 +27,17 @@ library:
   default-extensions:
     - OverloadedStrings
   dependencies:
-  - aeson
-  - mtl
   - HDBC
-  - HDBC-sqlite3
   - HDBC-postgresql
+  - HDBC-sqlite3
+  - aeson
+  - bytestring
+  - either
+  - mtl
   - servant
   - servant-server
   - transformers
   - wai
-  - either
   - warp
 
 executables:

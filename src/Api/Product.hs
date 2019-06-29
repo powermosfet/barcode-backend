@@ -9,7 +9,7 @@ import App (AppM)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (ask)
 import Data.Aeson
-import Database.HDBC
+import Database.HDBC (SqlValue(SqlString), fromSql, quickQuery', run)
 import GHC.Generics
 import Servant
 
@@ -28,32 +28,64 @@ instance ToJSON Product
 
 instance FromJSON Product
 
-productFromSql :: [SqlValue] -> AppM Product
-productFromSql [SqlString barcode, SqlString description] =
-  return $ Product (Barcode barcode) description
-productFromSql _ = throwError err500
+productFromSql :: ServantErr -> [SqlValue] -> AppM Product
+productFromSql _ [barcode, description] =
+  return $ Product (Barcode (fromSql barcode)) (fromSql description)
+productFromSql err _ = throwError err
 
 type ListApi = Get '[ JSON] [Product]
+
+type SingleApi = Capture "barcode" String :> Get '[ JSON] Product
 
 type PostApi = ReqBody '[ JSON] Product :> Post '[ JSON] Product
 
 type PutApi
-   = Capture "id" Int :> ReqBody '[ JSON] Product :> Put '[ JSON] Product
+   = Capture "barcode" String :> ReqBody '[ JSON] Product :> Put '[ JSON] Product
 
-type Api = ListApi :<|> PostApi :<|> PutApi
+type Api = ListApi :<|> SingleApi :<|> PostApi :<|> PutApi
 
 server :: ServerT Api AppM
-server =
-  getList :<|> post :<|> (\_ _ -> return (Product (Barcode "000000") "Ost"))
-
-post :: Product -> AppM Product
-post _ = return (Product (Barcode "000000") "Ost")
-
-put :: Barcode -> Product -> AppM Product
-put _ _ = return (Product (Barcode "000000") "Ost")
+server = getList :<|> getSingle :<|> post :<|> put
 
 getList :: AppM [Product]
 getList = do
   (_, conn) <- ask
   results <- liftIO $ quickQuery' conn "SELECT * FROM product;" []
-  mapM productFromSql results
+  mapM (productFromSql err500) results
+
+getSingle :: String -> AppM Product
+getSingle barcode = do
+  (_, conn) <- ask
+  results <-
+    liftIO $
+    quickQuery'
+      conn
+      "SELECT * FROM product where barcode = ? LIMIT 1;"
+      [SqlString barcode]
+  productFromSql err404 (concat results)
+
+post :: Product -> AppM Product
+post prod@(Product (Barcode barcode) description) = do
+  (_, conn) <- ask
+  result <-
+    liftIO $
+    run
+      conn
+      "INSERT INTO product VALUES (?, ?);"
+      [SqlString barcode, SqlString description]
+  if result == 1
+    then return prod
+    else throwError err500
+
+put :: String -> Product -> AppM Product
+put barcode (Product _ description) = do
+  (_, conn) <- ask
+  result <-
+    liftIO $
+    run
+      conn
+      "UPDATE product SET description=? WHERE barcode=?;"
+      [SqlString description, SqlString barcode]
+  if result == 1
+    then return (Product (Barcode barcode) description)
+    else throwError err404

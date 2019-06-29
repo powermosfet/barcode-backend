@@ -4,15 +4,14 @@ module Lib
 
 import qualified Api
 import qualified Config
-import Network.Wai.Handler.Warp
-import System.Environment
+import Network.Wai.Handler.Warp (run)
+import System.Environment (getEnvironment)
 
 barcodeBackend :: IO ()
 barcodeBackend = do
   env <- getEnvironment
   case Config.fromEnvironment env of
     Left err -> putStrLn err
-    Right config -> do
-      let port = Config.configPort config
-      conn <- Config.connectDb config
-      run port $ Api.app (config, conn)
+    Right (port, dbConfig) -> do
+      conn <- Config.connectDb dbConfig
+      run port $ Api.app conn

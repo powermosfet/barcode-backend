@@ -3,24 +3,25 @@
 
 module Api where
 
-import qualified Api.Product
-import Servant (ServerT, Application, Handler, Proxy(..), (:>), serve, hoistServer)
-import App (AppM, Context)
-import Control.Monad.Trans.Reader (runReaderT)
+import qualified Api.Product as Product
+import App (AppM, DbConn, runAppM)
+import Servant
+  ( (:>)
+  , Application
+  , Handler
+  , Proxy(..)
+  , ServerT
+  , hoistServer
+  , serve
+  )
 
-type Api = "api" :>
-    ( "product" :> Api.Product.Api
-    )
+type Api = "api" :> ("product" :> Product.Api)
 
 api :: Proxy Api
 api = Proxy
 
 server :: ServerT Api AppM
-server = Api.Product.server
+server = Product.server
 
-nt :: Context -> AppM a -> Handler a
-nt context x = runReaderT x context
-
-app :: Context -> Application
-app context = serve api $ hoistServer api (nt context) server
-
+app :: DbConn -> Application
+app conn = serve api $ hoistServer api (runAppM conn) server

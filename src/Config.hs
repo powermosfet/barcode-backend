@@ -3,31 +3,32 @@ module Config where
 import Database.HDBC.PostgreSQL (Connection, connectPostgreSQL)
 import Text.Read (readMaybe)
 
-data Config =
-  Config
-    { configPort :: Int
-    , configDbHost :: String
+data DbConfig =
+  DbConfig
+    { configDbHost :: String
     , configDbUser :: String
     , configDbPw :: String
     , configDbPort :: String
     , configDbName :: String
     }
 
-fromEnvironment :: [(String, String)] -> Either String Config
+fromEnvironment :: [(String, String)] -> Either String (Int, DbConfig)
 fromEnvironment env =
   let getEnv convert name =
         maybe (missingEnv name) Right (lookup name env >>= convert)
       getS = getEnv Just
       getI = getEnv readMaybe
-   in Config <$> getI "PORT" <*> getS "DB_HOST" <*> getS "DB_USER" <*>
-      getS "DB_PW" <*>
-      getS "DB_PORT" <*>
-      getS "DB_NAME"
+      config =
+        DbConfig <$> getS "DB_HOST" <*> getS "DB_USER" <*> getS "DB_PW" <*>
+        getS "DB_PORT" <*>
+        getS "DB_NAME"
+      port = getI "PORT"
+   in (,) <$> port <*> config
 
 missingEnv :: String -> Either String a
 missingEnv var = Left ("Could not find environment variable " ++ var)
 
-makeConnectionString :: Config -> String
+makeConnectionString :: DbConfig -> String
 makeConnectionString config =
   "user=" ++
   configDbUser config ++
@@ -37,5 +38,5 @@ makeConnectionString config =
   configDbHost config ++
   " port=" ++ configDbPort config ++ " dbname=" ++ configDbName config
 
-connectDb :: Config -> IO Connection
+connectDb :: DbConfig -> IO Connection
 connectDb config = connectPostgreSQL (makeConnectionString config)

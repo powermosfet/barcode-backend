@@ -8,10 +8,24 @@ module Api.Product where
 import App (AppM)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (ask)
-import Data.Aeson
+import Data.Aeson (FromJSON, ToJSON)
 import Database.HDBC (SqlValue(SqlString), fromSql, quickQuery', run)
-import GHC.Generics
+import GHC.Generics (Generic)
 import Servant
+  ( (:<|>)(..)
+  , (:>)
+  , Capture
+  , Get
+  , JSON
+  , Post
+  , Put
+  , ReqBody
+  , ServantErr
+  , ServerT
+  , err404
+  , err500
+  , throwError
+  )
 
 newtype Barcode =
   Barcode String
@@ -49,13 +63,13 @@ server = getList :<|> getSingle :<|> post :<|> put
 
 getList :: AppM [Product]
 getList = do
-  (_, conn) <- ask
+  conn <- ask
   results <- liftIO $ quickQuery' conn "SELECT * FROM product;" []
   mapM (productFromSql err500) results
 
 getSingle :: String -> AppM Product
 getSingle barcode = do
-  (_, conn) <- ask
+  conn <- ask
   results <-
     liftIO $
     quickQuery'
@@ -66,7 +80,7 @@ getSingle barcode = do
 
 post :: Product -> AppM Product
 post prod@(Product (Barcode barcode) description) = do
-  (_, conn) <- ask
+  conn <- ask
   result <-
     liftIO $
     run
@@ -79,7 +93,7 @@ post prod@(Product (Barcode barcode) description) = do
 
 put :: String -> Product -> AppM Product
 put barcode (Product _ description) = do
-  (_, conn) <- ask
+  conn <- ask
   result <-
     liftIO $
     run

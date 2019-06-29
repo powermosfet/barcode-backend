@@ -11,6 +11,7 @@ data DbConfig =
     , configDbPort :: String
     , configDbName :: String
     }
+  deriving (Show)
 
 fromEnvironment :: [(String, String)] -> Either String (Int, DbConfig)
 fromEnvironment env =

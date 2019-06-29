@@ -13,5 +13,9 @@ barcodeBackend = do
   case Config.fromEnvironment env of
     Left err -> putStrLn err
     Right (port, dbConfig) -> do
+      putStrLn "Database config:"
+      print dbConfig
+      putStr "\nStarting barcode api server on port "
+      print port
       conn <- Config.connectDb dbConfig
       run port $ Api.app conn

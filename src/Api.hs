@@ -5,15 +5,7 @@ module Api where
 
 import qualified Api.Product as Product
 import App (AppM, DbConn, runAppM)
-import Servant
-  ( (:>)
-  , Application
-  , Handler
-  , Proxy(..)
-  , ServerT
-  , hoistServer
-  , serve
-  )
+import Servant ((:>), Application, Proxy(..), ServerT, hoistServer, serve)
 
 type Api = "api" :> ("product" :> Product.Api)
 

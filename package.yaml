@@ -29,9 +29,7 @@ library:
   dependencies:
   - HDBC
   - HDBC-postgresql
-  - HDBC-sqlite3
   - aeson
-  - bytestring
   - either
   - mtl
   - servant

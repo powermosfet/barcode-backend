@@ -35,7 +35,7 @@ makeConnectionString config =
   configDbUser config ++
   " password=" ++
   configDbPw config ++
-  " hostaddr=" ++
+  " host=" ++
   configDbHost config ++
   " port=" ++ configDbPort config ++ " dbname=" ++ configDbName config
 

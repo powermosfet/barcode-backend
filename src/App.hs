@@ -1,8 +1,8 @@
 module App
-  ( DbConn
-  , AppM
-  , runAppM
-  ) where
+    ( DbConn
+    , AppM
+    , runAppM
+    ) where
 
 import Control.Monad.Reader (ReaderT)
 import Control.Monad.Trans.Reader (runReaderT)

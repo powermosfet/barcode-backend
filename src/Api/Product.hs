@@ -8,7 +8,18 @@ module Api.Product where
 import App (AppM)
 import Control.Monad.IO.Class (liftIO)
 import Control.Monad.Reader (ask)
-import Data.Aeson (FromJSON, ToJSON)
+import Data.Aeson
+  ( FromJSON
+  , Options
+  , ToJSON
+  , defaultOptions
+  , fieldLabelModifier
+  , genericParseJSON
+  , genericToJSON
+  , parseJSON
+  , toJSON
+  )
+import Data.Char (toLower)
 import Database.HDBC (SqlValue(SqlString), fromSql, quickQuery', run)
 import GHC.Generics (Generic)
 import Servant
@@ -38,9 +49,14 @@ data Product =
     }
   deriving (Eq, Show, Generic)
 
-instance ToJSON Product
+aesonOptions :: Options
+aesonOptions = defaultOptions {fieldLabelModifier = (map toLower . drop 7)}
 
-instance FromJSON Product
+instance ToJSON Product where
+  toJSON = genericToJSON aesonOptions
+
+instance FromJSON Product where
+  parseJSON = genericParseJSON aesonOptions
 
 productFromSql :: ServantErr -> [SqlValue] -> AppM Product
 productFromSql _ [barcode, description] =

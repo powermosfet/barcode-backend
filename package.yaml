@@ -39,7 +39,7 @@ library:
   - warp
 
 executables:
-  barcode-backend-exe:
+  barcode-backend:
     main:                Main.hs
     source-dirs:         app
     ghc-options:

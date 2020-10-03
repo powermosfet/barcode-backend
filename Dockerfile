@@ -2,7 +2,8 @@ FROM archlinux:latest
 RUN mkdir -p /opt/barcode-backend/
 ARG BINARY_PATH
 WORKDIR /opt/barcode-backend
-RUN pacman -Syu --noconfirm
+RUN pacman -Syu --noconfirm && pacman -S --noconfirm \
+    postgresql-libs
 COPY "$BINARY_PATH" /opt/barcode-backend
 
 ENV PORT=8080

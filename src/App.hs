@@ -1,17 +1,14 @@
 module App
-    ( DbConn
-    , AppM
+    ( AppM
     , runAppM
     ) where
 
 import Control.Monad.Reader (ReaderT)
 import Control.Monad.Trans.Reader (runReaderT)
-import Database.HDBC.PostgreSQL (Connection)
 import Servant (Handler)
+import Config (DbConfig)
 
-type DbConn = Connection
+type AppM = ReaderT DbConfig Handler
 
-type AppM = ReaderT DbConn Handler
-
-runAppM :: DbConn -> AppM a -> Handler a
-runAppM conn x = runReaderT x conn
+runAppM :: DbConfig -> AppM a -> Handler a
+runAppM config x = runReaderT x config

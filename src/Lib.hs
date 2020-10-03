@@ -17,5 +17,4 @@ barcodeBackend = do
             print dbConfig
             putStr "\nStarting barcode api server on port "
             print port
-            conn <- Config.connectDb dbConfig
-            run port $ Api.app conn
+            run port $ Api.app dbConfig

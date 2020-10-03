@@ -1,6 +1,6 @@
 module Config where
 
-import Database.HDBC.PostgreSQL (Connection, connectPostgreSQL)
+import Database.HDBC.PostgreSQL (Connection, withPostgreSQL)
 import Text.Read (readMaybe)
 
 data DbConfig =
@@ -39,5 +39,5 @@ makeConnectionString config =
     configDbHost config ++
     " port=" ++ configDbPort config ++ " dbname=" ++ configDbName config
 
-connectDb :: DbConfig -> IO Connection
-connectDb config = connectPostgreSQL (makeConnectionString config)
+withDb :: DbConfig -> (Connection -> IO a) -> IO a
+withDb config action = withPostgreSQL (makeConnectionString config) action

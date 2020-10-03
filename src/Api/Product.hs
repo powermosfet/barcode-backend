@@ -20,7 +20,7 @@ import Data.Aeson
     , toJSON
     )
 import Data.Char (toLower)
-import Database.HDBC (SqlValue(SqlString), fromSql, quickQuery', run)
+import Database.HDBC (SqlValue(SqlString), fromSql, quickQuery', run, commit)
 import GHC.Generics (Generic)
 import Servant
     ( (:<|>)(..)
@@ -37,6 +37,7 @@ import Servant
     , err500
     , throwError
     )
+import qualified Config 
 
 newtype Barcode =
     Barcode String
@@ -79,32 +80,40 @@ server = getList :<|> getSingle :<|> post :<|> put
 
 getList :: AppM [Product]
 getList = do
-    conn <- ask
+    dbConfig <- ask
     let query = "SELECT * FROM product;"
-    results <- liftIO $ quickQuery' conn query []
+    results <- liftIO $ Config.withDb dbConfig (\conn -> quickQuery' conn query [])
     mapM (productFromSql err500) results
 
 getSingle :: String -> AppM Product
 getSingle barcode = do
-    conn <- ask
+    dbConfig <- ask
     let query = "SELECT * FROM product where barcode = ? LIMIT 1;"
-    results <- liftIO $ quickQuery' conn query [SqlString barcode]
+    results <- liftIO $ Config.withDb dbConfig (\conn -> quickQuery' conn query [SqlString barcode])
     productFromSql err404 (concat results)
 
 post :: Product -> AppM Product
 post prod@(Product (Barcode barcode) description) = do
-    conn <- ask
+    dbConfig <- ask
     let query = "INSERT INTO product VALUES (?, ?);"
-    result <- liftIO $ run conn query [SqlString barcode, SqlString description]
+    result <- liftIO $ Config.withDb dbConfig (\conn -> do
+        result <- run conn query [SqlString barcode, SqlString description]
+        commit conn
+        return result
+        )
     if result == 1
         then return prod
         else throwError err500
 
 put :: String -> Product -> AppM Product
 put barcode (Product _ description) = do
-    conn <- ask
+    dbConfig <- ask
     let query = "UPDATE product SET description=? WHERE barcode=?;"
-    result <- liftIO $ run conn query [SqlString description, SqlString barcode]
+    result <- liftIO $ Config.withDb dbConfig (\conn -> do
+        result <- run conn query [SqlString description, SqlString barcode]
+        commit conn
+        return result
+        )
     if result == 1
         then return (Product (Barcode barcode) description)
         else throwError err404

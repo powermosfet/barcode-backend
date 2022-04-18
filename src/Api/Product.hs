@@ -31,7 +31,7 @@ import Servant
     , Post
     , Put
     , ReqBody
-    , ServantErr
+    , ServerError
     , ServerT
     , err404
     , err500
@@ -59,7 +59,7 @@ instance ToJSON Product where
 instance FromJSON Product where
     parseJSON = genericParseJSON aesonOptions
 
-productFromSql :: ServantErr -> [SqlValue] -> AppM Product
+productFromSql :: ServerError -> [SqlValue] -> AppM Product
 productFromSql _ [barcode, description] =
     return $ Product (Barcode (fromSql barcode)) (fromSql description)
 productFromSql err _ = throwError err
